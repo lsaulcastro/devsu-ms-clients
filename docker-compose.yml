@@ -1,0 +1,21 @@
+name: devsu-ms-clients
+services:
+  postgres-clients:
+    image: postgres:16-alpine
+    container_name: devsu-postgres-clients
+    ports:
+      - "5470:5432"
+    environment:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD: clients_pass
+      POSTGRES_DB: clients_db
+    volumes:
+      - postgres-clients-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clients_user -d clients_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-clients-data:

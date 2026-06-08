@@ -3,9 +3,9 @@ spring:
     name: ms-clients
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/clientes_db
-    username: clientes_user
-    password: clientes_pass
+    url: jdbc:postgresql://localhost:5470/clients_db
+    username: clients_user
+    password: clients_pass
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -31,6 +31,14 @@ spring:
       properties:
         spring.json.add.type.headers: false
 
+app:
+  kafka:
+    topic:
+      customer-events: customer-events
+  outbox:
+    poll-interval-ms: 2000
+
+
 server:
   port: 8081
 
@@ -54,3 +62,4 @@ logging:
   level:
     com.devsu.clients: DEBUG
     org.hibernate.SQL: DEBUG
+
