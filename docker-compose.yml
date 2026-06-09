@@ -1,12 +1,14 @@
 name: devsu-ms-clients
+
 services:
+
   postgres-clients:
     image: postgres:16-alpine
     container_name: devsu-postgres-clients
     ports:
       - "5470:5432"
     environment:
-      POSTGRES_USER:
+      POSTGRES_USER: clients_user
       POSTGRES_PASSWORD: clients_pass
       POSTGRES_DB: clients_db
     volumes:
@@ -17,5 +19,32 @@ services:
       timeout: 5s
       retries: 10
 
+  ms-clients:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: devsu/ms-clients:latest
+    container_name: devsu-ms-clients
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-clients:5432/clients_db
+      SPRING_DATASOURCE_USERNAME: clients_user
+      SPRING_DATASOURCE_PASSWORD: clients_pass
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      APP_KAFKA_TOPIC_CUSTOMER_EVENTS: customer-events
+      APP_OUTBOX_POLL_INTERVAL_MS: 2000
+    depends_on:
+      postgres-clients:
+        condition: service_healthy
+    networks:
+      - default
+      - kafka-shared
+
 volumes:
   postgres-clients-data:
+
+networks:
+  kafka-shared:
+    name: devsu-kafka-shared
+    external: true

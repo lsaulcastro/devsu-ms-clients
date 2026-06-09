@@ -8,6 +8,7 @@ import com.devsu.clients.dto.common.ApiResponse;
 import com.devsu.clients.mapper.CustomerMapper;
 import com.devsu.clients.service.CustomerCommandService;
 import com.devsu.clients.service.CustomerQueryService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -36,38 +38,46 @@ public class CustomerController {
     private final CustomerMapper customerMapper;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<CustomerResponse>> create(@Valid @RequestBody CreateCustomerRequest request) {
+    public ResponseEntity<ApiResponse<CustomerResponse>> create(
+            @Valid @RequestBody CreateCustomerRequest request,
+            HttpServletRequest httpRequest) {
         CustomerResponse response = customerMapper.toResponse(commandService.create(request));
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{customerId}")
                 .buildAndExpand(response.customerId())
                 .toUri();
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(HttpStatus.CREATED.value(), location.getPath(), response));
+        return ResponseEntity.created(location)
+                .body(ApiResponse.success(HttpStatus.CREATED.value(), httpRequest.getRequestURI(), response));
     }
 
     @GetMapping("/{customerId}")
-    public ResponseEntity<ApiResponse<CustomerResponse>> findByCustomerId(@PathVariable String customerId) {
+    public ResponseEntity<ApiResponse<CustomerResponse>> findByCustomerId(
+            @PathVariable String customerId,
+            HttpServletRequest httpRequest) {
         CustomerResponse response = customerMapper.toResponse(queryService.findByCustomerId(customerId));
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "/customers/" + customerId, response));
+        return ResponseEntity.ok(
+                ApiResponse.success(HttpStatus.OK.value(), httpRequest.getRequestURI(), response));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CustomerResponse>>> findAll() {
+    public ResponseEntity<ApiResponse<List<CustomerResponse>>> findAll(HttpServletRequest httpRequest) {
         List<CustomerResponse> response = customerMapper.toResponseList(queryService.findAll());
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "/customers", response));
+        return ResponseEntity.ok(
+                ApiResponse.success(HttpStatus.OK.value(), httpRequest.getRequestURI(), response));
     }
 
     @PutMapping("/{customerId}")
     public ResponseEntity<ApiResponse<CustomerResponse>> update(
             @PathVariable String customerId,
-            @Valid @RequestBody UpdateCustomerRequest request) {
+            @Valid @RequestBody UpdateCustomerRequest request,
+            HttpServletRequest httpRequest) {
         CustomerResponse response = customerMapper.toResponse(commandService.update(customerId, request));
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "/customers/" + customerId, response));
+        return ResponseEntity.ok(
+                ApiResponse.success(HttpStatus.OK.value(), httpRequest.getRequestURI(), response));
     }
 
     @PatchMapping("/{customerId}/password")
-    @org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changePassword(
             @PathVariable String customerId,
             @Valid @RequestBody ChangePasswordRequest request) {
@@ -75,7 +85,7 @@ public class CustomerController {
     }
 
     @DeleteMapping("/{customerId}")
-    @org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deactivate(@PathVariable String customerId) {
         commandService.deactivate(customerId);
     }
